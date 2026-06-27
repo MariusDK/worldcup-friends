@@ -7,7 +7,7 @@ import Nav from '@/components/Nav';
 import {ApiError, api, isLoggedIn} from '@/lib/api';
 
 type Group = {id: string; name: string; inviteCode: string};
-type LeaderboardRow = {userId: string; displayName: string; points: number; predictions: number};
+type LeaderboardRow = {userId: string; displayName: string; role?: string; points: number; predictions: number};
 
 export default function Leaderboard() {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -101,7 +101,9 @@ export default function Leaderboard() {
                   </div>
                   <div className="min-w-0">
                   <h2 className="truncate text-lg font-black">{row.displayName}</h2>
-                  <p className="text-white/50 text-sm">{row.predictions} predictions</p>
+                  <p className="text-white/50 text-sm">
+                    {roleLabel(row.role)} · {row.predictions} predictions
+                  </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -119,4 +121,8 @@ export default function Leaderboard() {
       <Nav/>
     </main>
   );
+}
+
+function roleLabel(role?: string) {
+  return role?.toUpperCase() === 'OWNER' ? 'Owner' : 'Member';
 }

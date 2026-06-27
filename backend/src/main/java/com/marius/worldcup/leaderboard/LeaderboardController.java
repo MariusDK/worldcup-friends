@@ -26,7 +26,7 @@ public class LeaderboardController {
     this.users = users;
   }
 
-  record Row(UUID userId, String displayName, int points, long predictions) {}
+  record Row(UUID userId, String displayName, String role, int points, long predictions) {}
 
   @GetMapping
   public List<Row> leaderboard(@PathVariable("groupId") UUID groupId) {
@@ -45,6 +45,7 @@ public class LeaderboardController {
               return new Row(
                   user.id,
                   user.displayName,
+                  member.role,
                   totals.getOrDefault(user.id, 0),
                   counts.getOrDefault(user.id, 0L));
             })

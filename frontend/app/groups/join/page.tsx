@@ -67,7 +67,10 @@ export default function JoinGroup() {
         <div className="card mt-5">
           <p className="eyebrow">Joined</p>
           <h2 className="text-2xl font-black mt-1">{group.name}</h2>
-          <Link className="btn mt-4" href="/matches">Go to matches</Link>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <Link className="btn" href="/leaderboard">Leaderboard</Link>
+            <Link className="btn btn-secondary" href="/matches">Matches</Link>
+          </div>
         </div>
       )}
 
