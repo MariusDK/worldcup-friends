@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -68,7 +70,10 @@ public class GroupController {
     try {
       members.saveAndFlush(member);
     } catch (DataIntegrityViolationException duplicateMembership) {
-      return group;
+      if (members.findByGroupIdAndUserId(group.id, user.id).isPresent()) {
+        return group;
+      }
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Could not join group");
     }
 
     return group;

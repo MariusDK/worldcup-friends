@@ -83,3 +83,20 @@ databaseChangeLog:
             tableName: prediction
             columnNames: user_id,match_id,group_id
             constraintName: uq_prediction_user_match_group
+  - changeSet:
+      id: 003-fix-group-member-unique-constraint
+      author: marius
+      changes:
+        - sql:
+            sql: |
+              DELETE FROM group_member old_row
+              USING group_member new_row
+              WHERE old_row.ctid < new_row.ctid
+                AND old_row.group_id = new_row.group_id
+                AND old_row.user_id = new_row.user_id;
+        - sql:
+            sql: ALTER TABLE group_member DROP CONSTRAINT IF EXISTS uq_group_member;
+        - addUniqueConstraint:
+            tableName: group_member
+            columnNames: group_id,user_id
+            constraintName: uq_group_member
