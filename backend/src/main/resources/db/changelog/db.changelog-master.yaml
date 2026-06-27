@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-core-tables
+      author: marius
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: email, type: varchar(255), constraints: {nullable: false, unique: true}}
+              - column: {name: display_name, type: varchar(120), constraints: {nullable: false}}
+              - column: {name: password_hash, type: varchar(255), constraints: {nullable: false}}
+              - column: {name: created_at, type: timestamp with time zone, defaultValueComputed: CURRENT_TIMESTAMP}
+        - createTable:
+            tableName: friend_group
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: name, type: varchar(120), constraints: {nullable: false}}
+              - column: {name: owner_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: invite_code, type: varchar(20), constraints: {nullable: false, unique: true}}
+              - column: {name: created_at, type: timestamp with time zone, defaultValueComputed: CURRENT_TIMESTAMP}
+        - createTable:
+            tableName: group_member
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: group_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: user_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: role, type: varchar(20), constraints: {nullable: false}}
+              - column: {name: joined_at, type: timestamp with time zone, defaultValueComputed: CURRENT_TIMESTAMP}
+        - addUniqueConstraint: {tableName: group_member, columnNames: group_id,user_id, constraintName: uq_group_member}
+        - createTable:
+            tableName: wc_match
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: external_id, type: varchar(80), constraints: {unique: true}}
+              - column: {name: home_team, type: varchar(80)}
+              - column: {name: away_team, type: varchar(80)}
+              - column: {name: kickoff_at, type: timestamp with time zone}
+              - column: {name: status, type: varchar(30)}
+              - column: {name: home_score, type: int}
+              - column: {name: away_score, type: int}
+        - createTable:
+            tableName: prediction
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: user_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: match_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: group_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: home_score, type: int}
+              - column: {name: away_score, type: int}
+              - column: {name: predicted_winner, type: varchar(10)}
+              - column: {name: locked_at, type: timestamp with time zone}
+              - column: {name: points, type: int, defaultValueNumeric: 0}
+        - addUniqueConstraint: {tableName: prediction, columnNames: user_id,match_id,group_id, constraintName: uq_prediction_user_match_group}
+        - createTable:
+            tableName: challenge
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: challenger_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: opponent_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: group_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: match_id, type: uuid, constraints: {nullable: false}}
+              - column: {name: challenger_prediction_id, type: uuid}
+              - column: {name: opponent_prediction_id, type: uuid}
+              - column: {name: status, type: varchar(20), defaultValue: PENDING}
+              - column: {name: winner_user_id, type: uuid}
+              - column: {name: created_at, type: timestamp with time zone, defaultValueComputed: CURRENT_TIMESTAMP}

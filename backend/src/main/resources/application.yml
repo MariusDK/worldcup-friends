@@ -1,0 +1,35 @@
+spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/worldcup}
+    username: ${SPRING_DATASOURCE_USERNAME:worldcup}
+    password: ${SPRING_DATASOURCE_PASSWORD:worldcup}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/worldcup}
+    user: ${SPRING_DATASOURCE_USERNAME:worldcup}
+    password: ${SPRING_DATASOURCE_PASSWORD:worldcup}
+    default-schema: public
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+app:
+  jwt-secret: ${JWT_SECRET:dev-secret-change-me-dev-secret-change-me}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  match-api:
+    url: ${MATCH_API_URL:https://worldcup26.ir/get/games}
+    time-zone: ${MATCH_API_TIME_ZONE:America/New_York}
+    sync-delay-ms: ${MATCH_API_SYNC_DELAY_MS:900000}
