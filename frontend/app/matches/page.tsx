@@ -118,7 +118,7 @@ export default function Matches() {
       });
       setSaveState((current) => ({...current, [match.id]: 'Prediction saved.'}));
     } catch (e) {
-      if (e instanceof ApiError && e.status === 403) {
+      if (e instanceof ApiError && e.status === 401) {
         localStorage.removeItem('token');
         setLoggedIn(false);
         router.push('/login');

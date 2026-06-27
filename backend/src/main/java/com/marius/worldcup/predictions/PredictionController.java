@@ -1,10 +1,12 @@
 package com.marius.worldcup.predictions;
 
+import com.marius.worldcup.groups.GroupMemberRepository;
 import com.marius.worldcup.matches.MatchRepository;
 import com.marius.worldcup.users.AppUser;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,10 +22,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class PredictionController {
   private final PredictionRepository predictions;
   private final MatchRepository matches;
+  private final GroupMemberRepository members;
 
-  PredictionController(PredictionRepository predictions, MatchRepository matches) {
+  PredictionController(
+      PredictionRepository predictions, MatchRepository matches, GroupMemberRepository members) {
     this.predictions = predictions;
     this.matches = matches;
+    this.members = members;
   }
 
   record PredictionReq(UUID groupId, UUID matchId, int homeScore, int awayScore) {}
@@ -31,6 +36,10 @@ public class PredictionController {
   @PostMapping("/predictions")
   Prediction submit(@AuthenticationPrincipal AppUser user, @RequestBody PredictionReq request) {
     validate(request);
+
+    if (!members.existsByGroupIdAndUserId(request.groupId(), user.id)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Join this group before saving predictions");
+    }
 
     var match =
         matches
@@ -42,10 +51,7 @@ public class PredictionController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Prediction locked: match already started");
     }
 
-    var prediction =
-        predictions
-            .findByUserIdAndMatchIdAndGroupId(user.id, request.matchId(), request.groupId())
-            .orElseGet(Prediction::new);
+    var prediction = findOrCreate(user.id, request.matchId(), request.groupId());
     prediction.userId = user.id;
     prediction.groupId = request.groupId();
     prediction.matchId = request.matchId();
@@ -54,7 +60,19 @@ public class PredictionController {
     prediction.predictedWinner = winner(request.homeScore(), request.awayScore());
     prediction.lockedAt = null;
 
-    return predictions.save(prediction);
+    try {
+      return predictions.saveAndFlush(prediction);
+    } catch (DataIntegrityViolationException duplicatePrediction) {
+      var existing =
+          predictions
+              .findByUserIdAndMatchIdAndGroupId(user.id, request.matchId(), request.groupId())
+              .orElseThrow();
+      existing.homeScore = request.homeScore();
+      existing.awayScore = request.awayScore();
+      existing.predictedWinner = winner(request.homeScore(), request.awayScore());
+      existing.lockedAt = null;
+      return predictions.save(existing);
+    }
   }
 
   @GetMapping("/groups/{groupId}/predictions")
@@ -85,5 +103,9 @@ public class PredictionController {
 
   private static boolean isOpenForPredictions(String status) {
     return status == null || "SCHEDULED".equalsIgnoreCase(status) || "NOTSTARTED".equalsIgnoreCase(status);
+  }
+
+  private Prediction findOrCreate(UUID userId, UUID matchId, UUID groupId) {
+    return predictions.findByUserIdAndMatchIdAndGroupId(userId, matchId, groupId).orElseGet(Prediction::new);
   }
 }
