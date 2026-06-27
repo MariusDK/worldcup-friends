@@ -9,9 +9,9 @@ type AuthResponse = {
 };
 
 export default function Login() {
-  const [email, setEmail] = useState('marius@test.com');
-  const [displayName, setDisplayName] = useState('Marius');
-  const [password, setPassword] = useState('password1');
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('register');
   const [error, setError] = useState('');
   const router = useRouter();
