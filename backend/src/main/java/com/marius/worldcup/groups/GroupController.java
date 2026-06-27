@@ -3,7 +3,9 @@ package com.marius.worldcup.groups;
 import com.marius.worldcup.users.AppUser;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,14 +54,23 @@ public class GroupController {
   @PostMapping("/join/{inviteCode}")
   public FriendGroup join(
       @AuthenticationPrincipal AppUser user, @PathVariable("inviteCode") String inviteCode) {
-    var group = groups.findByInviteCode(inviteCode).orElseThrow();
-    if (!members.existsByGroupIdAndUserId(group.id, user.id)) {
-      var member = new GroupMember();
-      member.groupId = group.id;
-      member.userId = user.id;
-      member.role = "MEMBER";
-      members.save(member);
+    var code = inviteCode.trim().toUpperCase(Locale.ROOT);
+    var group = groups.findByInviteCode(code).orElseThrow();
+    if (members.findByGroupIdAndUserId(group.id, user.id).isPresent()) {
+      return group;
     }
+
+    var member = new GroupMember();
+    member.groupId = group.id;
+    member.userId = user.id;
+    member.role = group.ownerId.equals(user.id) ? "OWNER" : "MEMBER";
+
+    try {
+      members.saveAndFlush(member);
+    } catch (DataIntegrityViolationException duplicateMembership) {
+      return group;
+    }
+
     return group;
   }
 
